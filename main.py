@@ -25,19 +25,19 @@ print(f"high_corr_df = \n{high_corr_df}")
 # Scaling and PCA
 numeric_data = numeric_data.drop(columns=['dew', 'summertime'])
 scaled_data = scale_data(numeric_data)
-pca_data = apply_pca(scaled_data, n_components=9)
-print(f"pca_data = \n{pca_data}")
+pca_data = apply_pca(scaled_data)
+
 
 # Split dataset1
 mapping = {'high_bike_demand': 1, 'low_bike_demand': 0}
 y = data['increase_stock'].replace(mapping).to_numpy().reshape(-1, 1)
-X_train, X_test, y_train, y_test = train_test_split(pca_data, y, test_size=0.2, random_state=42,
+X_train, X_test, y_train, y_test = train_test_split(scaled_data, y, test_size=0.2, random_state=42,
                                                     stratify=y)
 
+"""Choose whether we need to balance the dataset"""
+# X_train_bal, y_train_bal = balance_classes(X_train, y_train)
 
-X_train_bal, y_train_bal = balance_classes(X_train, y_train)
-
-# X_train_bal, y_train_bal = X_train, y_train
+X_train_bal, y_train_bal = X_train, y_train
 
 
 # Hyperparameter tuning for Random Forest

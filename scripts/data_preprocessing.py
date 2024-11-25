@@ -9,7 +9,7 @@ def load_data(file_path):
 
 def preprocess_data(data):
     # Handle missing values
-    print(f"Number of missing data \n{data.isnull().sum()}")
+    # print(f"Number of missing data \n{data.isnull().sum()}")
     # Drop columns with no valuable information
     if 'snow' in data.columns and data['snow'].nunique() == 1:
         data = data.drop(columns=['snow'])
