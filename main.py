@@ -10,7 +10,6 @@ from scripts.hyperparameter_tuning import tune_random_forest, tune_xgboost, tune
 from sklearn.metrics import classification_report, confusion_matrix
 import numpy as np
 
-
 # Load and preprocess data
 data = load_data('data/training_data_fall2024.csv')
 data = preprocess_data(data)
@@ -24,20 +23,23 @@ plot_correlation_matrix(spearman_corr)
 print(f"high_corr_df = \n{high_corr_df}")
 
 # Scaling and PCA
+numeric_data = numeric_data.drop(columns=['dew', 'summertime'])
 scaled_data = scale_data(numeric_data)
-pca_data = apply_pca(scaled_data, n_components=10)
+pca_data = apply_pca(scaled_data, n_components=9)
+print(f"pca_data = \n{pca_data}")
 
-# Split dataset
+# Split dataset1
 mapping = {'high_bike_demand': 1, 'low_bike_demand': 0}
 y = data['increase_stock'].replace(mapping).to_numpy().reshape(-1, 1)
 X_train, X_test, y_train, y_test = train_test_split(pca_data, y, test_size=0.2, random_state=42,
                                                     stratify=y)
-# pca_data, y = balance_classes(pca_data, y)
 
 
 X_train_bal, y_train_bal = balance_classes(X_train, y_train)
 
 # X_train_bal, y_train_bal = X_train, y_train
+
+
 # Hyperparameter tuning for Random Forest
 print("Tuning Random Forest...")
 best_rf = tune_random_forest(X_train_bal, y_train_bal)
@@ -59,7 +61,6 @@ print(f"Tuned XGBoost Accuracy: {accuracy:.2f}")
 print(f"Tuned XGBoost F1 Score: {f1:.2f}")
 print("Classification Report:\n", report)
 print("Confusion Matrix:\n", confusion_matrix(y_test, best_xgb.predict(X_test)))
-
 
 # # Hyperparameter tuning for CatBoost
 # print("Tuning CatBoost...")
