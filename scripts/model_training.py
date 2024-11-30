@@ -5,9 +5,9 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticD
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier, GradientBoostingClassifier
-import xgboost as xgb
-from lightgbm import LGBMClassifier
-from catboost import CatBoostClassifier
+# import xgboost as xgb
+# from lightgbm import LGBMClassifier
+# from catboost import CatBoostClassifier
 
 
 # Function to train Logistic Regression
@@ -73,48 +73,48 @@ def train_gradient_boosting(X_train, y_train, n_estimators=100):
     return model
 
 
-def train_xgboost(X_train, y_train, n_estimators=100):
-    num_pos = (y_train == 1).sum()
-    num_neg = (y_train == 0).sum()
-    ratio = num_neg / num_pos
-
-    model = xgb.XGBClassifier(
-        objective='binary:logistic',
-        n_estimators=n_estimators,
-        random_state=42,
-        scale_pos_weight=ratio,
-        use_label_encoder=False,
-        eval_metric='logloss'
-    )
-    model.fit(X_train, y_train.ravel())
-    return model
-
-
-def train_lightgbm(X_train, y_train, n_estimators=100):
-    num_pos = (y_train == 1).sum()
-    num_neg = (y_train == 0).sum()
-    ratio = num_neg / num_pos
-
-    model = LGBMClassifier(
-        n_estimators=n_estimators,
-        random_state=42,
-        class_weight='balanced',
-        scale_pos_weight=ratio  # 或者只使用class_weight='balanced'
-    )
-    model.fit(X_train, y_train.ravel())
-    return model
-
-
-def train_catboost(X_train, y_train, n_estimators=100):
-    num_pos = (y_train == 1).sum()
-    num_neg = (y_train == 0).sum()
-    class_weights = [1, num_neg / num_pos]
-
-    model = CatBoostClassifier(
-        iterations=n_estimators,
-        random_seed=42,
-        class_weights=class_weights,
-        verbose=0  # 关闭训练输出
-    )
-    model.fit(X_train, y_train.ravel())
-    return model
+# def train_xgboost(X_train, y_train, n_estimators=100):
+#     num_pos = (y_train == 1).sum()
+#     num_neg = (y_train == 0).sum()
+#     ratio = num_neg / num_pos
+#
+#     model = xgb.XGBClassifier(
+#         objective='binary:logistic',
+#         n_estimators=n_estimators,
+#         random_state=42,
+#         scale_pos_weight=ratio,
+#         use_label_encoder=False,
+#         eval_metric='logloss'
+#     )
+#     model.fit(X_train, y_train.ravel())
+#     return model
+#
+#
+# def train_lightgbm(X_train, y_train, n_estimators=100):
+#     num_pos = (y_train == 1).sum()
+#     num_neg = (y_train == 0).sum()
+#     ratio = num_neg / num_pos
+#
+#     model = LGBMClassifier(
+#         n_estimators=n_estimators,
+#         random_state=42,
+#         class_weight='balanced',
+#         scale_pos_weight=ratio  # 或者只使用class_weight='balanced'
+#     )
+#     model.fit(X_train, y_train.ravel())
+#     return model
+#
+#
+# def train_catboost(X_train, y_train, n_estimators=100):
+#     num_pos = (y_train == 1).sum()
+#     num_neg = (y_train == 0).sum()
+#     class_weights = [1, num_neg / num_pos]
+#
+#     model = CatBoostClassifier(
+#         iterations=n_estimators,
+#         random_seed=42,
+#         class_weights=class_weights,
+#         verbose=0  # 关闭训练输出
+#     )
+#     model.fit(X_train, y_train.ravel())
+#     return model
