@@ -9,7 +9,6 @@ from sklearn.metrics import make_scorer, f1_score, recall_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import Ridge, LinearRegression
 from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
-import optuna
 
 
 def evaluate_parameters_rf(X_train, y_train, n_estimators_list, max_depth_list, cv=5):
