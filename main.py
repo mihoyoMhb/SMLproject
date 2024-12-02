@@ -15,14 +15,13 @@ data = load_data('data/training_data_fall2024.csv')
 data = preprocess_data(data)
 
 numeric_data = data.select_dtypes(include=['float64', 'int64'])
-numeric_data = numeric_data.drop(columns=['precip'])
+numeric_data = numeric_data.drop(columns=['precip',])
 
 spearman_corr, p_values, high_corr_df = calculate_spearman_correlation(numeric_data, threshold=0.7)
 plot_correlation_matrix(spearman_corr)
 # Print highly correlated pairs
 print(f"high_corr_df = \n{high_corr_df}")
 """这里直接不PCA数据，对月份数据进行三角函数化，保留其周期性，同时对0-1标签数据不正则化"""
-# numeric_data_new = data.select_dtypes(include=['float64', 'int64'])
 numerical_new = process_time_data_scale(numeric_data)
 
 # Split dataset
@@ -53,14 +52,14 @@ print("Classification Report:\n", report)
 print("Confusion Matrix:\n", confusion_matrix(y_test, best_rf.predict(X_test)))
 print(f"\n\n\n\n")
 
-# print("Tuning Adaboost...")
-# best_boot = tune_adaboost_rs(X_train_bal, y_train_bal)
-# accuracy, f1, report = evaluate_model(best_boot, X_test, y_test)
-# print(f"Tuned Adaboost Accuracy: {accuracy:.2f}")
-# print(f"Tuned Adaboost F1 Score: {f1:.2f}")
-# print("Classification Report:\n", report)
-# print("Confusion Matrix:\n", confusion_matrix(y_test, best_boot.predict(X_test)))
-# print(f"\n\n\n\n")
+print("Tuning Adaboost...")
+best_boot = tune_adaboost_rs(X_train_bal, y_train_bal)
+accuracy, f1, report = evaluate_model(best_boot, X_test, y_test)
+print(f"Tuned Adaboost Accuracy: {accuracy:.2f}")
+print(f"Tuned Adaboost F1 Score: {f1:.2f}")
+print("Classification Report:\n", report)
+print("Confusion Matrix:\n", confusion_matrix(y_test, best_boot.predict(X_test)))
+print(f"\n\n\n\n")
 #
 # print("Tuning KNN...")
 # best_knn = tune_knn_rs(X_train_bal, y_train_bal)

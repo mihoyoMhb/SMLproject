@@ -9,6 +9,7 @@ from sklearn.metrics import make_scorer, f1_score, recall_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import Ridge, LinearRegression
 from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
+import optuna
 
 
 def evaluate_parameters_rf(X_train, y_train, n_estimators_list, max_depth_list, cv=5):
@@ -51,9 +52,18 @@ def tune_random_forest_rs(X_train, y_train, cv=5, scoring='f1', n_iter=300):
         'max_features': ['sqrt', 'log2', 0.1, 0.2, 0.3, 0.4, 0.5],
         'bootstrap': [True, False],
         'class_weight': ['balanced', {0: 1, 1: ratio}, {0: 1 / ratio, 1: 1}],
-        'criterion': ['gini', 'entropy']
+        'criterion': ['gini', 'entropy'],
     }
-
+    # param_dist = {
+    #     'n_estimators': [1 * i for i in range(100, 750)],  # 100 到 375，步长25
+    #     'max_depth': list(range(1, 20)),  # 7 到 13
+    #     'min_samples_split': list(range(3, 32)),
+    #     'min_samples_leaf': list(range(3, 32)),
+    #     'max_features': ['sqrt', 'log2', 0.1, 0.2, 0.3, 0.4, 0.5],
+    #     'bootstrap': [True, False],
+    #     'class_weight': ['balanced', {0: 1, 1: ratio}, {0: 1 / ratio, 1: 1}],
+    #     'criterion': ['gini', 'entropy'],
+    # }
     rf = RandomForestClassifier(random_state=42)
     random_search = RandomizedSearchCV(
         estimator=rf,
@@ -108,5 +118,3 @@ def tune_knn_rs(X_train, y_train, cv=5, scoring='f1', n_iter=300):
     )
     random_search.fit(X_train, y_train.ravel())
     return random_search.best_estimator_
-
-

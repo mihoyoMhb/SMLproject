@@ -37,4 +37,4 @@ def process_time_data_scale(data):
                                 columns=numeric_features.columns,
                                 index=numeric_features.index)
     # return pd.concat([data[['weekday', 'holiday']], numeric_data], axis=1)
-    return pd.concat([data[['holiday', 'weekday', ]], numeric_data], axis=1)
+    return pd.concat([data[['holiday', 'weekday']], numeric_data], axis=1)
