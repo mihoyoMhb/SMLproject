@@ -43,26 +43,28 @@ def tune_random_forest_rs(X_train, y_train, cv=5, scoring='f1', n_iter=300):
     num_pos = np.sum(y_train == 1)
     num_neg = np.sum(y_train == 0)
     ratio = num_neg / num_pos
-    param_dist = {
-        'n_estimators': [10 * i for i in range(5, 75)],  # 100 到 375，步长25
-        'max_depth': list(range(1, 20)),  # 7 到 13
-        'min_samples_split': list(range(1, 32)),
-        'min_samples_leaf': list(range(1, 32)),
-        'max_features': ['sqrt', 'log2', 0.1, 0.2, 0.3, 0.4, 0.5],
-        'bootstrap': [True, False],
-        'class_weight': ['balanced', {0: 1, 1: ratio}, {0: 1 / ratio, 1: 1}],
-        'criterion': ['gini', 'entropy'],
-    }
     # param_dist = {
-    #     'n_estimators': [1 * i for i in range(100, 750)],  # 100 到 375，步长25
+    #     'n_estimators': [10 * i for i in range(5, 75)],  # 100 到 375，步长25
     #     'max_depth': list(range(1, 20)),  # 7 到 13
-    #     'min_samples_split': list(range(3, 32)),
-    #     'min_samples_leaf': list(range(3, 32)),
+    #     'min_samples_split': list(range(1, 32)),
+    #     'min_samples_leaf': list(range(1, 32)),
     #     'max_features': ['sqrt', 'log2', 0.1, 0.2, 0.3, 0.4, 0.5],
     #     'bootstrap': [True, False],
-    #     'class_weight': ['balanced', {0: 1, 1: ratio}, {0: 1 / ratio, 1: 1}],
-    #     'criterion': ['gini', 'entropy'],
+    #     'class_weight': ['balanced', {0: 1, 1: ratio}, {0: 1 / ratio, 1: 1}, {0: 1, 1: 1}],
+    #     'criterion': ["gini", "entropy", "log_loss"],
+    #     'warm_start': [True, False],
     # }
+    param_dist = {
+        'n_estimators': [5 * i for i in range(100, 150)],  # 100 到 375，步长25
+        'max_depth': list(range(15, 25)),  # 7 到 13
+        'min_samples_split': list(range(3, 32)),
+        'min_samples_leaf': list(range(3, 32)),
+        'max_features': ['sqrt', 'log2', 0.1, 0.2, 0.3, 0.4, 0.5],
+        'bootstrap': [True, False],
+        'class_weight': ['balanced', {0: 1, 1: ratio}, {0: 1 / ratio, 1: 1}, {0: 1, 1: 1}],
+        'criterion': ["gini", "entropy", "log_loss"],
+        'warm_start': [True, False],
+    }
     rf = RandomForestClassifier(random_state=42)
     random_search = RandomizedSearchCV(
         estimator=rf,
