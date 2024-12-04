@@ -145,7 +145,7 @@ def tune_random_forest_rs(X_train, y_train, cv=10, scoring='f1', n_iter=100):
     ratio = num_neg / num_pos
     param_dist = {
         'classifier__n_estimators': [2 * i for i in range(250, 300)],
-        'classifier__max_depth': list(range(15, 25)),
+        'classifier__max_depth': list(range(2, 25)),
         'classifier__min_samples_split': list(range(3, 32)),
         'classifier__min_samples_leaf': list(range(3, 32)),
         'classifier__max_features': ['sqrt', 'log2', 0.1, 0.2, 0.3, 0.4, 0.5],
@@ -399,3 +399,5 @@ if __name__ == "__main__":
     for model_name, result in results.items():
         print(f"{model_name} Test Set Accuracy: {result['accuracy']:.2f}")
         print(f"{model_name} Test Set F1 Score: {result['f1']:.2f}\n")
+
+    print(best_rf)
