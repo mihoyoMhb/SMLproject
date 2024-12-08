@@ -13,13 +13,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
 
 
-
 def label_weather_cluster(cluster_label):
     if cluster_label == 1:
         return 'bad_weather'
     elif cluster_label == 0:
         return 'good_weather'
-
 
 
 class CustomPreprocessor(BaseEstimator, TransformerMixin):
@@ -166,7 +164,7 @@ def tune_random_forest_rs(X_train, y_train, cv=10, scoring='f1', n_iter=200):
 def tune_ada_boost(X_train, y_train, cv=10, scoring='f1', n_iter=10):
     param_dist = {
         'classifier__n_estimators': [10 * i for i in range(10, 101)],
-        'classifier__learning_rate': [0.01, 0.1, 0.2, 0.3, 0,4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+        'classifier__learning_rate': [0.01, 0.1, 0.2, 0.3, 0, 4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
         'classifier__algorithm': ['SAMME']
     }
     pipeline = Pipeline([
@@ -189,6 +187,8 @@ def tune_ada_boost(X_train, y_train, cv=10, scoring='f1', n_iter=10):
 """
     LDA和QDA有点奇怪，但是先这样写吧
 """
+
+
 def train_lda(X_train, y_train):
     param_dist = {
         'classifier__solver': ['lsqr', 'eigen'],
@@ -233,6 +233,7 @@ def train_qda(X_train, y_train):
     )
     random_search.fit(X_train, y_train.ravel())
     return random_search.best_estimator_
+
 
 def tune_logistic_regression(X_train, y_train, cv=10, scoring='f1', n_iter=10):
     num_pos = np.sum(y_train == 1)
