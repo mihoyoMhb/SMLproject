@@ -12,15 +12,6 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticD
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
 
-# 按照sklearn的官方代码写法，这里先封装一个自定义的预处理器（处理步骤依旧和统一的结果一样）
-"""
-    写法就是，先必须声明一个自己的preprocessor，里面必须包含fit和transform函数,整体必须是一个类。
-    同时注意在tuning函数里面，写上一个如下的玩意
-    pipeline = Pipeline([
-        ('preprocessor', CustomPreprocessor()),
-        ('classifier', 你的模型(random_state=42))
-    ])
-"""
 
 
 def label_weather_cluster(cluster_label):
@@ -28,8 +19,7 @@ def label_weather_cluster(cluster_label):
         return 'bad_weather'
     elif cluster_label == 0:
         return 'good_weather'
-    # elif cluster_label == 2:
-    #     return 'neutral_weather'
+
 
 
 class CustomPreprocessor(BaseEstimator, TransformerMixin):
@@ -45,9 +35,6 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         :param X:
         :param y:
         :return: self
-        不知道为什么不能删掉这一堆，删掉就报错，还是按照官方指南来写吧，可能是最后fit模型的时候
-        对于测试集数据也要做一次类似的变换
-        这里的思路是，我们需要
         """
         # 对数变换
         X = X.copy()
@@ -73,11 +60,12 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         # 映射聚类标签到天气质量
         X['weather_quality'] = X['weather_cluster'].apply(label_weather_cluster)
         # One-Hot 编码
-        weather_dummies = pd.get_dummies(X['weather_quality'], prefix='weather', drop_first=True)
+        weather_dummies = pd.get_dummies(X['weather_quality'], prefix='whether', drop_first=True)
         # 保存天气哑变量的列名
         self.weather_dummies_columns = weather_dummies.columns
         X = pd.concat([X, weather_dummies], axis=1)
         X = X.drop(columns=clustering_features, axis=1)
+        X = X.drop(columns=['weather_quality', 'weather_cluster'], axis=1)
         # 选择特征
         weather_features = []
         self.categorical_features = ['holiday'] + list(self.weather_dummies_columns)
@@ -88,7 +76,7 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         for col in X.select_dtypes(include=['bool']).columns:
             X[col] = X[col].astype(int)
         # 在训练数据上拟合 StandardScaler
-        print(X)
+        # print(X)
         self.scaler.fit(X[self.numeric_features])
         return self
 
@@ -116,7 +104,7 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
 
         X['weather_quality'] = X['weather_cluster'].apply(label_weather_cluster)
 
-        weather_dummies = pd.get_dummies(X['weather_quality'], prefix='weather', drop_first=True)
+        weather_dummies = pd.get_dummies(X['weather_quality'], prefix='whether', drop_first=True)
 
         for col in self.weather_dummies_columns:
             if col not in weather_dummies.columns:
@@ -130,7 +118,7 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         X_scaled = pd.DataFrame(X_scaled, columns=self.numeric_features, index=X.index)
 
         X_processed = pd.concat([X[self.categorical_features], X_scaled], axis=1)
-        print(X_processed)
+        # print(X_processed)
         return X_processed
 
 
