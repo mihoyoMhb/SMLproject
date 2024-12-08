@@ -28,8 +28,8 @@ def label_weather_cluster(cluster_label):
         return 'bad_weather'
     elif cluster_label == 0:
         return 'good_weather'
-    elif cluster_label == 2:
-        return 'neutral_weather'
+    # elif cluster_label == 2:
+    #     return 'neutral_weather'
 
 
 class CustomPreprocessor(BaseEstimator, TransformerMixin):
@@ -62,10 +62,10 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         X['hour_of_day_sin'] = np.sin(2 * np.pi * X['hour_of_day'] / 24)
         X['hour_of_day_cos'] = np.cos(2 * np.pi * X['hour_of_day'] / 24)
 
-        X = X.drop(columns=['month', 'day_of_week', 'hour_of_day'], axis=1)
+        X = X.drop(columns=['month', 'day_of_week', 'hour_of_day', 'weekday', 'temp', 'snow'], axis=1)
 
-        clustering_features = ['summertime', 'temp', 'dew', 'humidity', 'snowdepth', 'windspeed', 'cloudcover',
-                               'visibility', 'precip', 'snow']
+        clustering_features = ['dew', 'humidity', 'snowdepth', 'windspeed', 'cloudcover',
+                               'visibility', 'precip']
         # 在训练数据上拟合 KMeans
         self.kmeans.fit(X[clustering_features])
         # 添加聚类结果
@@ -77,10 +77,10 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         # 保存天气哑变量的列名
         self.weather_dummies_columns = weather_dummies.columns
         X = pd.concat([X, weather_dummies], axis=1)
+        X = X.drop(columns=clustering_features, axis=1)
         # 选择特征
-        weather_features = ['summertime', 'temp', 'dew', 'humidity', 'snowdepth', 'windspeed', 'cloudcover',
-                            'visibility', 'precip', 'snow']
-        self.categorical_features = ['holiday', 'weekday'] + list(self.weather_dummies_columns)
+        weather_features = []
+        self.categorical_features = ['holiday'] + list(self.weather_dummies_columns)
         self.numeric_features = [col for col in X.columns if
                                  col not in ['holiday', 'weekday', 'increase_stock', 'weather_cluster',
                                              'weather_quality'] + list(self.weather_dummies_columns) + weather_features]
@@ -88,6 +88,7 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         for col in X.select_dtypes(include=['bool']).columns:
             X[col] = X[col].astype(int)
         # 在训练数据上拟合 StandardScaler
+        print(X)
         self.scaler.fit(X[self.numeric_features])
         return self
 
@@ -106,10 +107,10 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         X['hour_of_day_sin'] = np.sin(2 * np.pi * X['hour_of_day'] / 24)
         X['hour_of_day_cos'] = np.cos(2 * np.pi * X['hour_of_day'] / 24)
 
-        X = X.drop(columns=['month', 'day_of_week', 'hour_of_day'], axis=1)
+        X = X.drop(columns=['month', 'day_of_week', 'hour_of_day', 'weekday', 'temp', 'snow'], axis=1)
 
-        clustering_features = ['summertime', 'temp', 'dew', 'humidity', 'snowdepth', 'windspeed', 'cloudcover',
-                               'visibility', 'precip', 'snow']
+        clustering_features = ['dew', 'humidity', 'snowdepth', 'windspeed', 'cloudcover',
+                               'visibility', 'precip']
 
         X['weather_cluster'] = self.kmeans.predict(X[clustering_features])
 
@@ -121,7 +122,7 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
             if col not in weather_dummies.columns:
                 weather_dummies[col] = 0
         X = pd.concat([X, weather_dummies], axis=1)
-
+        X = X.drop(columns=clustering_features, axis=1)
         for col in X.select_dtypes(include=['bool']).columns:
             X[col] = X[col].astype(int)
 
@@ -129,6 +130,7 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         X_scaled = pd.DataFrame(X_scaled, columns=self.numeric_features, index=X.index)
 
         X_processed = pd.concat([X[self.categorical_features], X_scaled], axis=1)
+        print(X_processed)
         return X_processed
 
 
@@ -139,13 +141,13 @@ def evaluate_model(y_true, y_pred):
     return accuracy, f1, report
 
 
-def tune_random_forest_rs(X_train, y_train, cv=10, scoring='f1', n_iter=100):
+def tune_random_forest_rs(X_train, y_train, cv=10, scoring='f1', n_iter=200):
     num_pos = np.sum(y_train == 1)
     num_neg = np.sum(y_train == 0)
     ratio = num_neg / num_pos
     param_dist = {
         'classifier__n_estimators': [2 * i for i in range(250, 300)],
-        'classifier__max_depth': list(range(2, 25)),
+        'classifier__max_depth': list(range(15, 25)),
         'classifier__min_samples_split': list(range(3, 32)),
         'classifier__min_samples_leaf': list(range(3, 32)),
         'classifier__max_features': ['sqrt', 'log2', 0.1, 0.2, 0.3, 0.4, 0.5],
@@ -176,7 +178,7 @@ def tune_random_forest_rs(X_train, y_train, cv=10, scoring='f1', n_iter=100):
 def tune_ada_boost(X_train, y_train, cv=10, scoring='f1', n_iter=10):
     param_dist = {
         'classifier__n_estimators': [10 * i for i in range(10, 101)],
-        'classifier__learning_rate': [0.01, 0.1, 1, 10],
+        'classifier__learning_rate': [0.01, 0.1, 0.2, 0.3, 0,4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
         'classifier__algorithm': ['SAMME']
     }
     pipeline = Pipeline([
@@ -199,25 +201,50 @@ def tune_ada_boost(X_train, y_train, cv=10, scoring='f1', n_iter=10):
 """
     LDA和QDA有点奇怪，但是先这样写吧
 """
-
-
 def train_lda(X_train, y_train):
+    param_dist = {
+        'classifier__solver': ['lsqr', 'eigen'],
+        'classifier__shrinkage': [None, 'auto', 0.1, 0.5],
+    }
     pipeline = Pipeline([
         ('preprocessor', CustomPreprocessor()),
         ('classifier', LinearDiscriminantAnalysis())
     ])
-    pipeline.fit(X_train, y_train.ravel())
-    return pipeline
+    random_search = RandomizedSearchCV(
+        estimator=pipeline,
+        param_distributions=param_dist,
+        n_iter=10,
+        cv=5,
+        scoring='f1',
+        n_jobs=-1,
+        random_state=42
+    )
+    random_search.fit(X_train, y_train.ravel())
+    return random_search.best_estimator_
 
 
 def train_qda(X_train, y_train):
+    # 对QDA进行超参数搜索
+    param_dist = {
+        'classifier__reg_param': [0.0, 0.1, 0.3, 0.5, 0.7, 0.9],
+        'classifier__store_covariance': [True, False],
+        'classifier__tol': [1e-4, 1e-3, 1e-2, 1e-1]
+    }
     pipeline = Pipeline([
         ('preprocessor', CustomPreprocessor()),
         ('classifier', QuadraticDiscriminantAnalysis())
     ])
-    pipeline.fit(X_train, y_train.ravel())
-    return pipeline
-
+    random_search = RandomizedSearchCV(
+        estimator=pipeline,
+        param_distributions=param_dist,
+        n_iter=10,
+        cv=5,
+        scoring='f1',
+        n_jobs=-1,
+        random_state=42
+    )
+    random_search.fit(X_train, y_train.ravel())
+    return random_search.best_estimator_
 
 def tune_logistic_regression(X_train, y_train, cv=10, scoring='f1', n_iter=10):
     num_pos = np.sum(y_train == 1)
@@ -399,5 +426,3 @@ if __name__ == "__main__":
     for model_name, result in results.items():
         print(f"{model_name} Test Set Accuracy: {result['accuracy']:.2f}")
         print(f"{model_name} Test Set F1 Score: {result['f1']:.2f}\n")
-
-    print(best_rf)
