@@ -135,7 +135,7 @@ def tune_random_forest_rs(X_train, y_train, cv=10, scoring='f1', n_iter=200):
     ratio = num_neg / num_pos
     param_dist = {
         'classifier__n_estimators': [2 * i for i in range(250, 300)],
-        'classifier__max_depth': list(range(15, 25)),
+        'classifier__max_depth': list(range(5, 25)),
         'classifier__min_samples_split': list(range(3, 32)),
         'classifier__min_samples_leaf': list(range(3, 32)),
         'classifier__max_features': ['sqrt', 'log2', 0.1, 0.2, 0.3, 0.4, 0.5],
@@ -295,144 +295,44 @@ class WeakModel(BaseEstimator):
 
 # 主程序
 if __name__ == "__main__":
-    # lodaing the data
+    # loading the data
     data = pd.read_csv('data/training_data_fall2024.csv')
-    # models
-    # models = {
-    #     'Random Forest': RandomForestClassifier(random_state=42),
-    #     'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42),
-    #     'LDA': LinearDiscriminantAnalysis(),
-    #     'QDA': QuadraticDiscriminantAnalysis(),
-    #     'AdaBoost': AdaBoostClassifier(random_state=42)
-    # }
+
     X_all = data.copy()
     y_all = data['increase_stock'].map({'low_bike_demand': 0, 'high_bike_demand': 1}).to_numpy().ravel()
     X_all = X_all.drop(columns=['increase_stock'])
     """Split the training data into training and test data, with ratio of 8:2"""
-    X_trainval, X_test, y_trainval, y_test = train_test_split(X_all, y_all, test_size=0.2, random_state=42,
-                                                              stratify=y_all)
-    # Store results
-    results = {}
+    X_train, X_test, y_train, y_test = train_test_split(X_all, y_all, test_size=0.2, random_state=42,
+                                                        stratify=y_all)
 
-    # train Random Forest
-    print("\nTraining Random Forest...")
-    best_rf = tune_random_forest_rs(X_trainval, y_trainval)
-    y_pred_rf = best_rf.predict(X_test)
-    accuracy_rf, f1_rf, report_rf = evaluate_model(y_test, y_pred_rf)
-    print(f"Random Forest Test Set Accuracy: {accuracy_rf:.2f}")
-    print(f"Random Forest Test Set F1 Score: {f1_rf:.2f}")
-    print(f"Random Forest Classification Report:\n{report_rf}")
-    print(f"Random Forest Confusion Matrix:\n{confusion_matrix(y_test, y_pred_rf)}")
-    results['Random Forest'] = {
-        'model': best_rf,
-        'accuracy': accuracy_rf,
-        'f1': f1_rf,
-        'report': report_rf,
-        'confusion_matrix': confusion_matrix(y_test, y_pred_rf)
+
+    def hyperparameter_tuning_help_function(model_name, tuning_function,
+                                            X_train_in, y_train_in,
+                                            X_test_in, y_test_in, ):
+        print(f"\nTraining {model_name}...")
+        model = tuning_function(X_train_in, y_train_in)
+        y_pred = model.predict(X_test_in)
+        accuracy, f1, report = evaluate_model(y_test_in, y_pred)
+        print(f"{model_name} Test Set Accuracy: {accuracy:.2f}")
+        print(f"{model_name} Test Set F1 Score: {f1:.2f}")
+        print(f"{model_name} Classification Report:\n{report}")
+        print(f"{model_name} Confusion Matrix:\n{confusion_matrix(y_test, y_pred)}")
+
+
+    # pass the model to tune
+    models = {
+        'Random Forest': tune_random_forest_rs,
+        'Logistic Regression': tune_logistic_regression,
+        'AdaBoost': tune_ada_boost,
+        'LDA': train_lda,
+        'QDA': train_qda,
+        'KNN': tune_knn,
+        'Weak Model': lambda X, y: Pipeline([
+            ('preprocessor', CustomPreprocessor()),
+            ('classifier', WeakModel())
+        ]).fit(X, y)
     }
 
-    # train Logistic Regression
-    print("\nTraining Logistic Regression...")
-    best_lr = tune_logistic_regression(X_trainval, y_trainval)
-    y_pred_lr = best_lr.predict(X_test)
-    accuracy_lr, f1_lr, report_lr = evaluate_model(y_test, y_pred_lr)
-    print(f"Logistic Regression Test Set Accuracy: {accuracy_lr:.2f}")
-    print(f"Logistic Regression Test Set F1 Score: {f1_lr:.2f}")
-    print(f"Logistic Regression Classification Report:\n{report_lr}")
-    print(f"Logistic Regression Confusion Matrix:\n{confusion_matrix(y_test, y_pred_lr)}")
-    results['Logistic Regression'] = {
-        'model': best_lr,
-        'accuracy': accuracy_lr,
-        'f1': f1_lr,
-        'report': report_lr,
-        'confusion_matrix': confusion_matrix(y_test, y_pred_lr)
-    }
-
-    # train AdaBoost
-    print("\nTraining AdaBoost...")
-    best_ada = tune_ada_boost(X_trainval, y_trainval)
-    y_pred_ada = best_ada.predict(X_test)
-    accuracy_ada, f1_ada, report_ada = evaluate_model(y_test, y_pred_ada)
-    print(f"AdaBoost Test Set Accuracy: {accuracy_ada:.2f}")
-    print(f"AdaBoost Test Set F1 Score: {f1_ada:.2f}")
-    print(f"AdaBoost Classification Report:\n{report_ada}")
-    print(f"AdaBoost Confusion Matrix:\n{confusion_matrix(y_test, y_pred_ada)}")
-    results['AdaBoost'] = {
-        'model': best_ada,
-        'accuracy': accuracy_ada,
-        'f1': f1_ada,
-        'report': report_ada,
-        'confusion_matrix': confusion_matrix(y_test, y_pred_ada)
-    }
-
-    # train LDA
-    print("\nTraining LDA...")
-    best_lda = train_lda(X_trainval, y_trainval)
-    y_pred_lda = best_lda.predict(X_test)
-    accuracy_lda, f1_lda, report_lda = evaluate_model(y_test, y_pred_lda)
-    print(f"LDA Test Set Accuracy: {accuracy_lda:.2f}")
-    print(f"LDA Test Set F1 Score: {f1_lda:.2f}")
-    print(f"LDA Classification Report:\n{report_lda}")
-    print(f"LDA Confusion Matrix:\n{confusion_matrix(y_test, y_pred_lda)}")
-    results['LDA'] = {
-        'model': best_lda,
-        'accuracy': accuracy_lda,
-        'f1': f1_lda,
-        'report': report_lda,
-        'confusion_matrix': confusion_matrix(y_test, y_pred_lda)
-    }
-
-    # train QDA
-    print("\nTraining QDA...")
-    best_qda = train_qda(X_trainval, y_trainval)
-    y_pred_qda = best_qda.predict(X_test)
-    accuracy_qda, f1_qda, report_qda = evaluate_model(y_test, y_pred_qda)
-    print(f"QDA Test Set Accuracy: {accuracy_qda:.2f}")
-    print(f"QDA Test Set F1 Score: {f1_qda:.2f}")
-    print(f"QDA Classification Report:\n{report_qda}")
-    print(f"QDA Confusion Matrix:\n{confusion_matrix(y_test, y_pred_qda)}")
-    results['QDA'] = {
-        'model': best_qda,
-        'accuracy': accuracy_qda,
-        'f1': f1_qda,
-        'report': report_qda,
-        'confusion_matrix': confusion_matrix(y_test, y_pred_qda)
-    }
-
-    print("\nTraining KNN...")
-    best_knn = tune_knn(X_trainval, y_trainval)
-    y_pred_knn = best_knn.predict(X_test)
-    accuracy_knn, f1_knn, report_knn = evaluate_model(y_test, y_pred_knn)
-    print(f"KNN Test Set Accuracy: {accuracy_knn:.2f}")
-    print(f"KNN Test Set F1 Score: {f1_knn:.2f}")
-    print(f"KNN Classification Report:\n{report_knn}")
-    print(f"KNN Confusion Matrix:\n{confusion_matrix(y_test, y_pred_knn)}")
-    results['KNN'] = {
-        'model': best_knn,
-        'accuracy': accuracy_knn,
-        'f1': f1_knn,
-        'report': report_knn,
-        'confusion_matrix': confusion_matrix(y_test, y_pred_knn)
-    }
-
-    print("\nTraining Weak Model...")
-    weak_model_pipeline = Pipeline([
-        ('preprocessor', CustomPreprocessor()),
-        ('classifier', WeakModel())
-    ])
-    weak_model_pipeline.fit(X_trainval, y_trainval)
-    y_pred_weak = weak_model_pipeline.predict(X_test)
-    accuracy_weak, f1_weak, report_weak = evaluate_model(y_test, y_pred_weak)
-    print(f"Weak Model Test Set Accuracy: {accuracy_weak:.2f}")
-    print(f"Weak Model Test Set F1 Score: {f1_weak:.2f}")
-    print(f"Weak Model Classification Report:\n{report_weak}")
-    print(f"Weak Model Confusion Matrix:\n{confusion_matrix(y_test, y_pred_weak)}")
-    results['Weak Model'] = {
-        'model': weak_model_pipeline,
-        'accuracy': accuracy_weak,
-        'f1': f1_weak,
-        'report': report_weak,
-        'confusion_matrix': confusion_matrix(y_test, y_pred_weak)
-    }
-
-    print(best_ada)
+# Train and evaluate each model
+    for model_name, train_function in models.items():
+        hyperparameter_tuning_help_function(model_name, train_function, X_train, y_train, X_test, y_test)
