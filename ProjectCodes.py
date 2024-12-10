@@ -80,6 +80,7 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
             X[col] = X[col].astype(int)
         # fit StandardScaler on training data set
         self.scaler.fit(X[self.numeric_features])
+        # print(X)
         return self
 
     def transform(self, X):
@@ -119,6 +120,7 @@ class CustomPreprocessor(BaseEstimator, TransformerMixin):
         X_scaled = pd.DataFrame(X_scaled, columns=self.numeric_features, index=X.index)
 
         X_processed = pd.concat([X[self.categorical_features], X_scaled], axis=1)
+        # print(X_processed)
         return X_processed
 
 
