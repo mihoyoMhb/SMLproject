@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from sklearn.model_selection import RandomizedSearchCV, train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
 from sklearn.cluster import KMeans
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
@@ -188,7 +188,7 @@ def tune_ada_boost(X_train, y_train, cv=10, scoring='f1', n_iter=10):
 
 
 def train_lda(X_train, y_train):
-    param_dist = {
+    param_grid = {
         'classifier__solver': ['lsqr', 'eigen'],
         'classifier__shrinkage': [None, 'auto', 0.1, 0.5],
     }
@@ -196,22 +196,19 @@ def train_lda(X_train, y_train):
         ('preprocessor', CustomPreprocessor()),
         ('classifier', LinearDiscriminantAnalysis())
     ])
-    random_search = RandomizedSearchCV(
+    grid_search = GridSearchCV(
         estimator=pipeline,
-        param_distributions=param_dist,
-        n_iter=10,
+        param_grid=param_grid,
         cv=5,
         scoring='f1',
-        n_jobs=-1,
-        random_state=42
+        n_jobs=-1
     )
-    random_search.fit(X_train, y_train.ravel())
-    return random_search.best_estimator_
+    grid_search.fit(X_train, y_train.ravel())
+    return grid_search.best_estimator_
 
 
 def train_qda(X_train, y_train):
-    # 对QDA进行超参数搜索
-    param_dist = {
+    param_grid = {
         'classifier__reg_param': [0.0, 0.1, 0.3, 0.5, 0.7, 0.9],
         'classifier__store_covariance': [True, False],
         'classifier__tol': [1e-4, 1e-3, 1e-2, 1e-1]
@@ -220,17 +217,15 @@ def train_qda(X_train, y_train):
         ('preprocessor', CustomPreprocessor()),
         ('classifier', QuadraticDiscriminantAnalysis())
     ])
-    random_search = RandomizedSearchCV(
+    grid_search = GridSearchCV(
         estimator=pipeline,
-        param_distributions=param_dist,
-        n_iter=10,
+        param_grid=param_grid,
         cv=5,
         scoring='f1',
-        n_jobs=-1,
-        random_state=42
+        n_jobs=-1
     )
-    random_search.fit(X_train, y_train.ravel())
-    return random_search.best_estimator_
+    grid_search.fit(X_train, y_train.ravel())
+    return grid_search.best_estimator_
 
 
 def tune_logistic_regression(X_train, y_train, cv=10, scoring='f1', n_iter=10):
@@ -266,7 +261,7 @@ def tune_knn(X_train, y_train, cv=10, scoring='f1', n_iter=10):
         'classifier__n_neighbors': list(range(1, 31)),
         'classifier__weights': ['uniform', 'distance'],
         'classifier__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
-        'classifier__p': [1, 2],  # p=1 曼哈顿距离，p=2 欧氏距离
+        'classifier__p': [1, 2],
     }
     pipeline = Pipeline([
         ('preprocessor', CustomPreprocessor()),
@@ -349,6 +344,7 @@ if __name__ == "__main__":
     X_test_all = test_data.copy()
 
     y_pred_best = best_model.predict(X_test_all)
+    print(f"len(y_pred_best) = {len(y_pred_best)}")
     # Write the .csv file
     predictions_str = ",".join(map(str, y_pred_best))
     with open("predictions.csv", "w") as f:
