@@ -342,16 +342,14 @@ if __name__ == "__main__":
         model = hyperparameter_tuning_help_function(model_name, train_function, X_train, y_train, X_test, y_test)
         if model_name == 'AdaBoost':
             best_model = model
-    print(best_model)
+    print(f"\nbest_model = \n{best_model}")
 
-    # 使用最终训练好的最佳模型对额外的测试集test_data_fall2024.csv进行预测
+    # Read a test file
     test_data = pd.read_csv('data/test_data_fall2024.csv')
     X_test_all = test_data.copy()
 
-    # 对额外测试集进行预测
     y_pred_best = best_model.predict(X_test_all)
-
-    # 将预测结果保存到predictions.csv（单行逗号分隔格式）
+    # Write the .csv file
     predictions_str = ",".join(map(str, y_pred_best))
     with open("predictions.csv", "w") as f:
         f.write(predictions_str)
